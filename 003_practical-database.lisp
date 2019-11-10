@@ -31,12 +31,35 @@
         (if (not (y-or-n-p "Another? [y/n]: ")) (return))))
 
 (defun select (selector-fn)
+    "Function removing records not passing supplied selector."
     (remove-if-not selector-fn *db*))
 
+;; lame selector approach
 (defun artist-selector (artist)
     #'(lambda (cd) (equal (getf cd :artist) artist)))
 
-;; disk operations
+;; less lame selector approach
+(defun where (&key title artist rating (ripped nil ripped-p))
+    #'(lambda (cd)
+        (and
+            (if title    (equal (getf cd :title)  title)  t)
+            (if artist   (equal (getf cd :artist) artist) t)
+            (if rating   (equal (getf cd :rating) rating) t)
+            (if ripped-p (equal (getf cd :ripped) ripped) t))))
+
+(defun update (selector-fn &key title artist rating (ripped nil ripped-p))
+    (setf *db*
+        (mapcar
+            #'(lambda (row)
+                (when (funcall selector-fn row)
+                    (if title    (setf (getf row :title)  title))
+                    (if artist   (setf (getf row :artist) artist))
+                    (if rating   (setf (getf row :rating) rating))
+                    (if ripped-p (setf (getf row :ripped) ripped)))
+                row)
+            *db*)))
+
+;;; disk operations
 (defun save-db (filename)
     (with-open-file (out filename
                      :direction :output
