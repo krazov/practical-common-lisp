@@ -38,12 +38,10 @@
 
 ;; disk operations
 (defun save-db (filename)
-    (with-open-file 
-        (out filename
-        :direction :output
-        :if-exists :supersede)
-        (with-standard-io-syntax
-        (print *db* out))))
+    (with-open-file (out filename
+                     :direction :output
+                     :if-exists :supersede)
+        (with-standard-io-syntax (print *db* out))))
 
 (defun load-db (filename)
     (with-open-file (in filename)
