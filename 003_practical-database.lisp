@@ -39,7 +39,7 @@
     #'(lambda (cd) (equal (getf cd :artist) artist)))
 
 ;; less lame selector approach
-(defun where (&key title artist rating (ripped nil ripped-p))
+(defun where-fn (&key title artist rating (ripped nil ripped-p))
     #'(lambda (cd)
         (and
             (if title    (equal (getf cd :title)  title)  t)
@@ -70,3 +70,14 @@
     (with-open-file (in filename)
         (with-standard-io-syntax
             (setf *db* (read in)))))
+
+;;; macros
+(defun make-comparison-expression (field value)
+    `(equal (getf cd ,field) ,value))
+
+(defun make-comparison-list (fields)
+    (loop while fields
+        collecting (make-comparison-expression (pop fields) (pop fields))))
+
+(defmacro where (&rest clauses)
+    `#'(lambda (cd) (and ,@(make-comparison-list clauses))))
