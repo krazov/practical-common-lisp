@@ -1,17 +1,14 @@
-(defparameter *last-id* 0)
 (defvar *todos* ())
 
-(defun new-id ()
-    (setq *last-id* (inc *last-id*)))
+(defparameter *new-id*
+    (let ((count 0))
+        #'(lambda () (setf count (1+ count)))))
 
 (defun new-todo (task)
     (list 
-        :id (new-id) 
+        :id (funcall *new-id*) 
         :task task 
         :done nil))
 
 (defun add-todo (todo)
     (push todo *todos*))
-
-;;; utils
-(defun inc (number) (+ number 1))
