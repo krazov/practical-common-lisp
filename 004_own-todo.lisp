@@ -1,6 +1,6 @@
 (defvar *todos* ())
 
-(defparameter *new-id*
+(defvar *new-id*
     (let ((count 0))
         #'(lambda () (setq count (1+ count)))))
 
@@ -35,8 +35,25 @@
 (defun prompt-for-todo ()
     (new-todo (prompt-read "Name your task: ")))
 
+(defun prompt-for-command ()
+    (prompt-read "/> "))
+
+;;; flow
+
+(defun exit? (command)
+    (equal command "exit"))
+
 ;;; fire!
 
-(defun main ()
+(defun main-for-todos ()
     (loop (add-todo (prompt-for-todo))
         (if (not (y-or-n-p "Do you want to add another task? [y/n]: ")) (return))))
+
+(defun main ()
+    (format t "Type a command ('exit' to leave).~%")
+    (do ((command nil) (is-exit nil))
+        (is-exit)
+        (setq command (prompt-for-command))
+        (if (setq is-exit (exit? command))
+            (format t "Goodbye.~%")
+            (format t "-> ~a~%" command))))
