@@ -43,8 +43,8 @@
 ;;; utils
 
 (defun list-of-words (str)
-    (do ((index 0 (1+ index))
-         (words nil)
+    (do ((words nil)
+         (index 0 (1+ index))
          (previous " " (char str index)))
         ((= index (length str)) (reverse words))
         (let ((current (string (char str index))))
@@ -58,6 +58,13 @@
 (defun exit? (command)
     (equal command "exit"))
 
+(defun dispatch (commands)
+    (let ((operation (pop commands)))
+        (cond
+            ((exit? operation) (format t "Goodbye.~%"))
+            (t (format t "-> ~{~a ~}~%" (push operation commands))))
+        operation))
+
 ;;; fire!
 
 (defun main-for-todos ()
@@ -66,9 +73,7 @@
 
 (defun main ()
     (format t "Type a command ('exit' to leave).~%")
-    (do ((command nil) (is-exit nil))
+    (do ((commands nil) (is-exit nil))
         (is-exit)
-        (setq command (prompt-for-command))
-        (if (setq is-exit (exit? command))
-            (format t "Goodbye.~%")
-            (format t "-> ~a~%" command))))
+        (setq commands (list-of-words (prompt-for-command)))
+        (setq is-exit (exit? (dispatch commands)))))
