@@ -73,7 +73,5 @@
 
 (defun main ()
     (format t "Type a command ('exit' to leave).~%")
-    (do ((commands nil) (is-exit nil))
-        (is-exit)
-        (setq commands (list-of-words (prompt-for-command)))
-        (setq is-exit (exit? (dispatch commands)))))
+    (do ((is-exit nil (exit? (dispatch (list-of-words (prompt-for-command))))))
+        (is-exit)))
