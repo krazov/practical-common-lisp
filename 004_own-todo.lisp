@@ -27,7 +27,7 @@
                 todo)
             *todos*)))
 
-;;; I/O
+;;; input
 
 (defun prompt-read (prompt)
     (format *query-io* "~a" prompt)
