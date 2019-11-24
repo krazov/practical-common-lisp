@@ -1,3 +1,5 @@
+;;; todos list
+
 (defvar *todos* ())
 
 (defvar *new-id*
@@ -9,9 +11,9 @@
         (equal (getf todo :id) id)))
 
 (defun new-todo (task)
-    (list 
-        :id (funcall *new-id*) 
-        :task task 
+    (list
+        :id (funcall *new-id*)
+        :task task
         :done nil))
 
 (defun add-todo (todo)
@@ -38,6 +40,19 @@
 (defun prompt-for-command ()
     (prompt-read "/> "))
 
+;;; utils
+
+(defun list-of-words (str)
+    (do ((index 0 (1+ index))
+         (words nil)
+         (previous " " (char str index)))
+        ((= index (length str)) (reverse words))
+        (let ((current (string (char str index))))
+            (unless (string= current " ")
+                (if (and (string= previous " ") (not (string= current " ")))
+                    (push current words)
+                    (push (concatenate 'string (pop words) current) words))))))
+
 ;;; flow
 
 (defun exit? (command)
@@ -57,16 +72,3 @@
         (if (setq is-exit (exit? command))
             (format t "Goodbye.~%")
             (format t "-> ~a~%" command))))
-
-;;; utils
-
-(defun list-of-words (str)
-    (do ((index 0 (1+ index))
-         (words nil)
-         (previous " " (char str index)))
-        ((= index (length str)) (reverse words))
-        (let ((current (string (char str index))))
-            (unless (string= current " ")
-                (if (and (string= previous " ") (not (string= current " ")))
-                    (push current words)
-                    (push (concatenate 'string (pop words) current) words))))))
