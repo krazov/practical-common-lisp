@@ -2,6 +2,9 @@
 
 (defparameter *exit* "exit")
 (defparameter *new* "new")
+(defparameter *show* "show")
+(defparameter *current* "current")
+(defparameter *archived* "archived")
 
 ;;; todos list
 
@@ -63,6 +66,9 @@
 (defun new? (operation)
     (equal operation *new*))
 
+(defun show? (operation)
+    (equal operation *show*))
+
 (defun exit? (operation)
     (equal operation *exit*))
 
@@ -70,6 +76,9 @@
     (let ((operation (first commands)))
         (cond
             ((new? operation) (add-todo (prompt-for-todo)))
+            ((show? operation)
+                (format t "Tasks:~%")
+                (format t "~{~{~a ~a ~}~%~}" (reverse *todos*)))
             ((exit? operation) (format t "Goodbye.~%"))
             (t (format t "-> ~{~a ~}~%" commands)))
         operation))
