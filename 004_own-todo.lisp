@@ -60,14 +60,18 @@
 
 ;;; flow
 
-(defun exit? (command)
-    (equal command *exit*))
+(defun new? (operation)
+    (equal operation *new*))
+
+(defun exit? (operation)
+    (equal operation *exit*))
 
 (defun dispatch (commands)
-    (let ((operation (pop commands)))
+    (let ((operation (first commands)))
         (cond
+            ((new? operation) (add-todo (prompt-for-todo)))
             ((exit? operation) (format t "Goodbye.~%"))
-            (t (format t "-> ~{~a ~}~%" (push operation commands))))
+            (t (format t "-> ~{~a ~}~%" commands)))
         operation))
 
 ;;; fire!
