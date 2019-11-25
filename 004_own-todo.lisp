@@ -1,3 +1,8 @@
+;;; commands
+
+(defparameter *exit* "exit")
+(defparameter *new* "new")
+
 ;;; todos list
 
 (defvar *todos* ())
@@ -56,7 +61,7 @@
 ;;; flow
 
 (defun exit? (command)
-    (equal command "exit"))
+    (equal command *exit*))
 
 (defun dispatch (commands)
     (let ((operation (pop commands)))
