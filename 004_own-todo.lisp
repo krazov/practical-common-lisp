@@ -31,7 +31,8 @@
     (setf *todos*
         (mapcar
             #'(lambda (todo)
-                (when (funcall (find-by-id id) todo) (setf (getf todo :done) status))
+                (when (funcall (find-by-id id) todo)
+                    (setf (getf todo :done) status))
                 todo)
             *todos*)))
 
@@ -50,16 +51,50 @@
 
 ;;; utils
 
+(defun space? (str)
+    (string= str " "))
+
+(defun not-space? (str)
+    (not (space? str)))
+
 (defun list-of-words (str)
-    (do ((words nil)
+    "You pass a string and get a list of strings."
+    (do ((words ())
          (index 0 (1+ index))
          (previous " " (char str index)))
         ((= index (length str)) (reverse words))
         (let ((current (string (char str index))))
-            (unless (string= current " ")
-                (if (and (string= previous " ") (not (string= current " ")))
-                    (push current words)
-                    (push (concatenate 'string (pop words) current) words))))))
+            (when (not-space? current)
+                (push (if (space? previous) current (concatenate 'string (pop words) current)) words)))))
+
+(defun list-of-words-light (str)
+    (do ((words ())
+         (start 0)
+         (index 0 (1+ index))
+         (previous " " (char str index)))
+        ((= index (length str))
+            (when (not-space? previous)
+                (push (subseq str start) words))
+            (reverse words))
+        (let ((current (char str index)))
+            (when (and (space? previous) (not-space? current))
+                (setq start index))
+            (when (and (not-space? previous) (space? current))
+                (push (subseq str start index) words)))))
+
+(defun list-of-words-2 (str)
+    "You pass a string and get a list of strings."
+    (do* ((words ())
+          (end (length str))
+          (previous " " current)
+          (index 0 (1+ index))
+          (is-end nil (= index end))
+          (current
+              (string (char str 0))
+              (if (not is-end) (string (char str index)))))
+        (is-end (reverse words))
+        (when (not-space? current)
+            (push (if (space? previous) current (concatenate 'string (pop words) current)) words))))
 
 ;;; flow
 
@@ -75,12 +110,15 @@
 (defun dispatch (commands)
     (let ((operation (first commands)))
         (cond
-            ((new? operation) (add-todo (prompt-for-todo)))
+            ((new? operation)
+                (add-todo (prompt-for-todo)))
             ((show? operation)
                 (format t "Tasks:~%")
                 (format t "~{~{~a ~a ~}~%~}" (reverse *todos*)))
-            ((exit? operation) (format t "Goodbye.~%"))
-            (t (format t "-> ~{~a ~}~%" commands)))
+            ((exit? operation)
+                (format t "Goodbye.~%"))
+            (t
+                (format t "-> ~{~a ~}~%" commands)))
         operation))
 
 ;;; fire!
