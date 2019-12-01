@@ -60,15 +60,6 @@
 (defun list-of-words (str)
     "You pass a string and get a list of strings."
     (do ((words ())
-         (index 0 (1+ index))
-         (previous " " (char str index)))
-        ((= index (length str)) (reverse words))
-        (let ((current (string (char str index))))
-            (when (not-space? current)
-                (push (if (space? previous) current (concatenate 'string (pop words) current)) words)))))
-
-(defun list-of-words-light (str)
-    (do ((words ())
          (start 0)
          (index 0 (1+ index))
          (previous " " (char str index)))
@@ -81,20 +72,6 @@
                 (setq start index))
             (when (and (not-space? previous) (space? current))
                 (push (subseq str start index) words)))))
-
-(defun list-of-words-2 (str)
-    "You pass a string and get a list of strings."
-    (do* ((words ())
-          (end (length str))
-          (previous " " current)
-          (index 0 (1+ index))
-          (is-end nil (= index end))
-          (current
-              (string (char str 0))
-              (if (not is-end) (string (char str index)))))
-        (is-end (reverse words))
-        (when (not-space? current)
-            (push (if (space? previous) current (concatenate 'string (pop words) current)) words))))
 
 ;;; flow
 
