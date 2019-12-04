@@ -1,7 +1,7 @@
 ;;; commands
 
 (defparameter *exit* "exit")
-(defparameter *new* "new")
+(defparameter *add* "add")
 (defparameter *show* "show")
 (defparameter *current* "current")
 (defparameter *archived* "archived")
@@ -17,6 +17,12 @@
 (defun find-by-id (id)
     #'(lambda (todo)
         (equal (getf todo :id) id)))
+
+(defun select-by-status (done?)
+    (remove-if-not
+        #'(lambda (todo)
+            (equal (getf todo :done) done?))
+        *todos*))
 
 (defun new-todo (task)
     (list
@@ -35,6 +41,12 @@
                     (setf (getf todo :done) status))
                 todo)
             *todos*)))
+
+(defun formatted-todo (todo)
+    (format t "~a. ~a [~:[ ~;x~]]"
+        (getf todo :id)
+        (getf todo :task)
+        (getf todo :done)))
 
 ;;; input
 
@@ -75,27 +87,47 @@
 
 ;;; flow
 
-(defun new? (operation)
-    (equal operation *new*))
+(defun add? (operation)
+    (equal operation *add*))
 
 (defun show? (operation)
     (equal operation *show*))
 
+(defun current? (type)
+    (equal type *current*))
+
+(defun archived? (type)
+    (equal type *archived*))
+
 (defun exit? (operation)
     (equal operation *exit*))
 
+(defun dispatch-show (arguments)
+    (let ((todos (reverse (select-by-status (if arguments (archived? (first arguments)))))))
+        (when todos
+            (format t "Tasks:~%")
+            (format t "~{~{~a ~a ~}~%~}" todos))
+        (unless todos (format t "No tasks matching criteria.~%"))))
+
 (defun dispatch (commands)
-    (let ((operation (first commands)))
+    (let ((operation (first commands))
+          (arguments (cdr commands)))
         (cond
-            ((new? operation)
+            ((add? operation)
                 (add-todo (prompt-for-todo)))
             ((show? operation)
-                (format t "Tasks:~%")
-                (format t "~{~{~a ~a ~}~%~}" (reverse *todos*)))
+                (let ((todos (reverse (select-by-status (if arguments (archived? (first arguments)))))))
+                    (when todos
+                        (format t "Tasks:~%")
+                        (format t "~{~{~a ~a ~}~%~}" todos))
+                    (unless todos (format t "No tasks matching criteria.~%"))))
+            ; -- edit
+            ; -- mark as done/undone
+            ; -- help
             ((exit? operation)
                 (format t "Goodbye.~%"))
             (t
-                (format t "-> ~{~a ~}~%" commands)))
+                (format t "Unknown command: ~{~a ~}~%" commands)))
         operation))
 
 ;;; fire!
@@ -105,5 +137,5 @@
         (if (not (y-or-n-p "Do you want to add another task? [y/n]: ")) (return))))
 
 (defun main ()
-    (format t "Type a command ('exit' to leave).~%")
+    (format t "Type a command ('help' for the manual, 'exit' to leave).~%")
     (do () ((exit? (dispatch (list-of-words (prompt-for-command)))))))
