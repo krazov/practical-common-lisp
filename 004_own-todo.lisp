@@ -72,7 +72,7 @@
     (read-line *query-io*))
 
 (defun prompt-for-todo ()
-    (new-todo (prompt-read "Add a task: ")))
+    (new-todo (prompt-read "[PROMPT] Add a task: ")))
 
 (defun prompt-for-command ()
     (format t "~%")
@@ -94,14 +94,14 @@
          (previous " " (char str index)))
         ((= index (length str))
             (when (not-space? previous)
-                (push (subseq str start) words))
+                (push (string-downcase (subseq str start)) words))
             (reverse words))
         (let ((current (char str index)))
             (cond
                 ((and (space? previous) (not-space? current))
                     (setq start index))
                 ((and (not-space? previous) (space? current))
-                    (push (subseq str start index) words))))))
+                    (push (string-downcase (subseq str start index)) words))))))
 
 ;;; flow
 
@@ -135,6 +135,9 @@
             (max possible-answer (length (getf current :task))))
         todos
         :initial-value 0))
+
+(defun dispatch-add ()
+    (format t "[INFO] Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
 
 (defun dispatch-show (arguments)
     (let* ((todos (reverse (select-by-status (if arguments (archived? (first arguments))))))
@@ -172,7 +175,7 @@
         (format t "~%")
         (cond
             ((add? operation)
-                (format t "[INFO] Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
+                (dispatch-add))
             ((show? operation)
                 (dispatch-show (cdr commands)))
             ; -- edit
