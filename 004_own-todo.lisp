@@ -145,10 +145,12 @@
         :initial-value 0))
 
 (defun dispatch-add ()
+    ; TODO: show current todos after saving
     (format t "[INFO] Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
 
 (defun dispatch-edit (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t)))
+        ; TODO: implement edit function
         (format t "[UNDER CONSTRUCTION] Soon, this will allow to edit todo with id of ~a.~%" id)))
 
 (defun dispatch-show (arguments)
@@ -158,10 +160,12 @@
            (latest-id (getf latest-todo :id))
            (id-length (length (write-to-string latest-id)))
            (task-length (longest-taskname todos)))
+        ; TODO: handling `all` case and make it default
         (cond
             ((equal *todos* nil)
                 (format t "[INFO] No todos. Type `add` to add some."))
             (todos
+                ; TODO: dynamic section title
                 (format t "Tasks:~%------~%")
                 (dolist (todo todos)
                     (formatted-todo todo id-length task-length)))
@@ -171,6 +175,7 @@
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
           (status (second arguments)))
+        ; TODO: re-loading previous list after update
         (cond
             ((equal id nil)
                 (format t "[ERROR] Second argument has to be a valid number.~%"))
