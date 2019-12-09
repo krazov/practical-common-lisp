@@ -5,6 +5,9 @@
 (defparameter *show* "show")
 (defparameter *current* "current")
 (defparameter *archived* "archived")
+(defparameter *mark* "mark")
+(defparameter *done* "done")
+(defparameter *undone* "undone")
 
 ;;; todos list
 
@@ -14,9 +17,14 @@
     (let ((count 0))
         #'(lambda () (setq count (1+ count)))))
 
-(defun find-by-id (id)
-    #'(lambda (todo)
-        (equal (getf todo :id) id)))
+(defun matches-id? (id todo)
+    (equal (getf todo :id) id))
+
+(defun select-by-id (id)
+    (remove-if-not
+        #'(lambda (todo)
+            (equal (getf todo :id) id))
+        *todos*))
 
 (defun select-by-status (done?)
     (remove-if-not
@@ -38,7 +46,7 @@
     (setf *todos*
         (mapcar
             #'(lambda (todo)
-                (when (funcall (find-by-id id) todo)
+                (when (matches-id? id todo)
                     (setf (getf todo :done) status))
                 todo)
             *todos*)))
@@ -89,10 +97,11 @@
                 (push (subseq str start) words))
             (reverse words))
         (let ((current (char str index)))
-            (when (and (space? previous) (not-space? current))
-                (setq start index))
-            (when (and (not-space? previous) (space? current))
-                (push (subseq str start index) words)))))
+            (cond
+                ((and (space? previous) (not-space? current))
+                    (setq start index))
+                ((and (not-space? previous) (space? current))
+                    (push (subseq str start index) words))))))
 
 ;;; flow
 
@@ -107,6 +116,15 @@
 
 (defun archived? (type)
     (equal type *archived*))
+
+(defun mark? (operation)
+    (equal operation *mark*))
+
+(defun done? (status)
+    (equal status *done*))
+
+(defun undone? (status)
+    (equal status *undone*))
 
 (defun exit? (operation)
     (equal operation *exit*))
@@ -132,17 +150,34 @@
                     (formatted-todo todo id-length task-length)))
             (format t "No tasks matching criteria.~%"))))
 
+(defun dispatch-mark (arguments)
+    (let ((id (parse-integer (first arguments) :junk-allowed t))
+          (status (second arguments)))
+        (cond
+            ((equal id nil)
+                (format t "[ERROR] Second argument has to be a valid number (and, ideally, id of existing todo).~%"))
+            ((equal (select-by-id id) nil)
+                (format t "[ERROR] There is no todo with id ~a.~%" id))
+            ((done? status)
+                (set-done id t)
+                (format t "[INFO] Status of todo with id ~a changed to done.~%" id))
+            ((undone? status)
+                (set-done id nil)
+                (format t "[INFO] Status of todo with id ~a changed to undone.~%" id))
+            (t
+                (format t "[ERROR] Status has to be either \"done\", or \"undone\".~%")))))
+
 (defun dispatch (commands)
-    (let ((operation (first commands))
-          (arguments (cdr commands)))
+    (let ((operation (first commands)))
         (format t "~%")
         (cond
             ((add? operation)
                 (format t "Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
             ((show? operation)
-                (dispatch-show arguments))
+                (dispatch-show (cdr commands)))
             ; -- edit
-            ; -- mark as done/undone
+            ((mark? operation)
+                (dispatch-mark (cdr commands)))
             ; -- help
             ((exit? operation)
                 (format t "Goodbye.~%"))
