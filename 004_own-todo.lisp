@@ -31,7 +31,8 @@
         :done nil))
 
 (defun add-todo (todo)
-    (push todo *todos*))
+    (push todo *todos*)
+    (getf todo :task))
 
 (defun set-done (id status)
     (setf *todos*
@@ -42,11 +43,14 @@
                 todo)
             *todos*)))
 
-(defun formatted-todo (todo)
-    (format t "~a. ~a [~:[ ~;x~]]"
-        (getf todo :id)
-        (getf todo :task)
-        (getf todo :done)))
+(defun formatted-todo (todo &optional (id-length 0) (task-length 0))
+    (let*
+        ((first-tab (+ 3 id-length))
+         (template (concatenate 'string "#~a~" (write-to-string first-tab) "t~a~" (write-to-string (+ 1 first-tab task-length)) "t[~:[ ~;x~]]~%")))
+        (format t template
+            (getf todo :id)
+            (getf todo :task)
+            (getf todo :done))))
 
 ;;; input
 
@@ -56,9 +60,10 @@
     (read-line *query-io*))
 
 (defun prompt-for-todo ()
-    (new-todo (prompt-read "Name your task: ")))
+    (new-todo (prompt-read "Add a task: ")))
 
 (defun prompt-for-command ()
+    (format t "~%")
     (prompt-read "/> "))
 
 ;;; utils
@@ -102,25 +107,36 @@
 (defun exit? (operation)
     (equal operation *exit*))
 
+(defun longest-taskname (todos)
+    (reduce
+        #'(lambda (possible-answer current)
+            (max possible-answer (length (getf current :task))))
+        todos
+        :initial-value 0))
+
 (defun dispatch-show (arguments)
-    (let ((todos (reverse (select-by-status (if arguments (archived? (first arguments)))))))
-        (when todos
-            (format t "Tasks:~%")
-            (format t "~{~{~a ~a ~}~%~}" todos))
-        (unless todos (format t "No tasks matching criteria.~%"))))
+    (let* ((todos (reverse (select-by-status (if arguments (archived? (first arguments))))))
+           ; TODO: move other local variables to a function
+           (latest-todo (first (reverse todos)))
+           (latest-id (getf latest-todo :id))
+           (id-length (length (write-to-string latest-id)))
+           (task-length (longest-taskname todos)))
+        (if todos
+            (progn
+                (format t "Tasks:~%---~%")
+                (dolist (todo todos)
+                    (formatted-todo todo id-length task-length)))
+            (format t "No tasks matching criteria.~%"))))
 
 (defun dispatch (commands)
     (let ((operation (first commands))
           (arguments (cdr commands)))
+        (format t "~%")
         (cond
             ((add? operation)
-                (add-todo (prompt-for-todo)))
+                (format t "Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
             ((show? operation)
-                (let ((todos (reverse (select-by-status (if arguments (archived? (first arguments)))))))
-                    (when todos
-                        (format t "Tasks:~%")
-                        (format t "~{~{~a ~a ~}~%~}" todos))
-                    (unless todos (format t "No tasks matching criteria.~%"))))
+                (dispatch-show arguments))
             ; -- edit
             ; -- mark as done/undone
             ; -- help
