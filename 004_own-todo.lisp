@@ -1,13 +1,15 @@
-;;; commands
+;;; vocabulary
 
-(defparameter *exit* "exit")
 (defparameter *add* "add")
 (defparameter *show* "show")
 (defparameter *current* "current")
 (defparameter *archived* "archived")
+(defparameter *edit* "edit")
 (defparameter *mark* "mark")
 (defparameter *done* "done")
 (defparameter *undone* "undone")
+(defparameter *help* "help")
+(defparameter *exit* "exit")
 
 ;;; todos list
 
@@ -103,7 +105,7 @@
                 ((and (not-space? previous) (space? current))
                     (push (string-downcase (subseq str start index)) words))))))
 
-;;; flow
+;;; checking vocabulary
 
 (defun add? (operation)
     (equal operation *add*))
@@ -117,6 +119,9 @@
 (defun archived? (type)
     (equal type *archived*))
 
+(defun edit? (operation)
+    (equal operation *edit*))
+
 (defun mark? (operation)
     (equal operation *mark*))
 
@@ -125,6 +130,9 @@
 
 (defun undone? (status)
     (equal status *undone*))
+
+(defun help? (operation)
+    (equal operation *help*))
 
 (defun exit? (operation)
     (equal operation *exit*))
@@ -139,6 +147,10 @@
 (defun dispatch-add ()
     (format t "[INFO] Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
 
+(defun dispatch-edit (arguments)
+    (let ((id (parse-integer (first arguments) :junk-allowed t)))
+        (format t "[UNDER CONSTRUCTION] Soon, this will allow to edit todo with id of ~a.~%" id)))
+
 (defun dispatch-show (arguments)
     (let* ((todos (reverse (select-by-status (if arguments (archived? (first arguments))))))
            ; TODO: move other local variables to a function
@@ -146,12 +158,15 @@
            (latest-id (getf latest-todo :id))
            (id-length (length (write-to-string latest-id)))
            (task-length (longest-taskname todos)))
-        (if todos
-            (progn
-                (format t "Tasks:~%---~%")
+        (cond
+            ((equal *todos* nil)
+                (format t "[INFO] No todos. Type `add` to add some."))
+            (todos
+                (format t "Tasks:~%------~%")
                 (dolist (todo todos)
                     (formatted-todo todo id-length task-length)))
-            (format t "[INFO] No tasks matching criteria.~%"))))
+            (t
+                (format t "[INFO] No tasks matching criteria.~%")))))
 
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
@@ -170,6 +185,15 @@
             (t
                 (format t "[ERROR] Status has to be either \"done\", or \"undone\".~%")))))
 
+(defun dispatch-help ()
+    (dolist (instruction '("- add - prompts for a new todo.~%"
+                           "- show [current|archived] - shows a list of current (default) or archived todos.~%"
+                           "- edit <id> - prompts for edit of a chosen todo.~%"
+                           "- mark <id> done|undone - marks todo as either done, or undone.~%"
+                           "- help - displays this message.~%"
+                           "- exit - exits the application.~%"))
+        (format t instruction)))
+
 (defun dispatch (commands)
     (let ((operation (first commands)))
         (format t "~%")
@@ -178,10 +202,12 @@
                 (dispatch-add))
             ((show? operation)
                 (dispatch-show (cdr commands)))
-            ; -- edit
+            ((edit? operation)
+                (dispatch-edit (cdr commands)))
             ((mark? operation)
                 (dispatch-mark (cdr commands)))
-            ; -- help
+            ((help? operation)
+                (dispatch-help))
             ((exit? operation)
                 (format t "Goodbye.~%"))
             (t
