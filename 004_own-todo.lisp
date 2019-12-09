@@ -148,10 +148,6 @@
 
 ;;; fire!
 
-(defun main-for-todos ()
-    (loop (add-todo (prompt-for-todo))
-        (if (not (y-or-n-p "Do you want to add another task? [y/n]: ")) (return))))
-
 (defun main ()
     (format t "Type a command ('help' for the manual, 'exit' to leave).~%")
     (do () ((exit? (dispatch (list-of-words (prompt-for-command)))))))
