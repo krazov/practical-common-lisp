@@ -43,10 +43,14 @@
                 todo)
             *todos*)))
 
+(defun tab-of (count)
+    (concatenate 'string "~" (write-to-string count) "t"))
+
 (defun formatted-todo (todo &optional (id-length 0) (task-length 0))
     (let*
         ((first-tab (+ 3 id-length))
-         (template (concatenate 'string "#~a~" (write-to-string first-tab) "t~a~" (write-to-string (+ 1 first-tab task-length)) "t[~:[ ~;x~]]~%")))
+         (template
+            (concatenate 'string "#~a" (tab-of first-tab) "~a" (tab-of (+ 1 first-tab task-length)) "[~:[ ~;x~]]~%")))
         (format t template
             (getf todo :id)
             (getf todo :task)
