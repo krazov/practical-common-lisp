@@ -148,22 +148,22 @@
                 (format t "Tasks:~%---~%")
                 (dolist (todo todos)
                     (formatted-todo todo id-length task-length)))
-            (format t "No tasks matching criteria.~%"))))
+            (format t "[INFO] No tasks matching criteria.~%"))))
 
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
           (status (second arguments)))
         (cond
             ((equal id nil)
-                (format t "[ERROR] Second argument has to be a valid number (and, ideally, id of existing todo).~%"))
+                (format t "[ERROR] Second argument has to be a valid number.~%"))
             ((equal (select-by-id id) nil)
-                (format t "[ERROR] There is no todo with id ~a.~%" id))
+                (format t "[WARNING] There is no todo with id ~a. No operation pefromed.~%" id))
             ((done? status)
                 (set-done id t)
-                (format t "[INFO] Status of todo with id ~a changed to done.~%" id))
+                (format t "[INFO] Todo with id ~a status changed to: done.~%" id))
             ((undone? status)
                 (set-done id nil)
-                (format t "[INFO] Status of todo with id ~a changed to undone.~%" id))
+                (format t "[INFO] Todo with id ~a status changed to: undone.~%" id))
             (t
                 (format t "[ERROR] Status has to be either \"done\", or \"undone\".~%")))))
 
@@ -172,7 +172,7 @@
         (format t "~%")
         (cond
             ((add? operation)
-                (format t "Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
+                (format t "[INFO] Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
             ((show? operation)
                 (dispatch-show (cdr commands)))
             ; -- edit
@@ -182,7 +182,7 @@
             ((exit? operation)
                 (format t "Goodbye.~%"))
             (t
-                (format t "Unknown command: ~{~a ~}~%" commands)))
+                (format t "[ERROR] Unknown command:~{ ~a~}\.~%" commands)))
         operation))
 
 ;;; fire!
