@@ -145,8 +145,8 @@
         :initial-value 0))
 
 (defun dispatch-add ()
-    ; TODO: show current todos after saving
-    (format t "[INFO] Task added: \"~a\"~%" (add-todo (prompt-for-todo))))
+    (format t "[INFO] Task added: \"~a\"~%~%" (add-todo (prompt-for-todo)))
+    (dispatch-show `(*archived*)))
 
 (defun dispatch-edit (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t)))
@@ -163,7 +163,7 @@
         ; TODO: handling `all` case and make it default
         (cond
             ((equal *todos* nil)
-                (format t "[INFO] No todos. Type `add` to add some."))
+                (format t "[INFO] No todos. Type `add` to add some.~%"))
             (todos
                 ; TODO: dynamic section title
                 (format t "Tasks:~%------~%")
