@@ -165,7 +165,6 @@
            (latest-id (getf latest-todo :id))
            (id-length (length (write-to-string latest-id)))
            (task-length (longest-taskname todos)))
-        ; TODO: handling `all` case and make it default
         (cond
             ((equal *todos* nil)
                 (format t "[INFO] No todos. Type `add` to add some.~%"))
