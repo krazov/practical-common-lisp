@@ -246,4 +246,5 @@
 
 (defun main ()
     (format t "Type a command ('help' for the manual, 'exit' to leave).~%")
+    ; TODO: load (and save) todos to local file
     (do () ((exit? (dispatch (list-of-words (prompt-for-command)))))))
