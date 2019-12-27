@@ -4,6 +4,7 @@
 (defparameter *show* "show")
 (defparameter *current* "current")
 (defparameter *archived* "archived")
+(defparameter *all* "all")
 (defparameter *edit* "edit")
 (defparameter *mark* "mark")
 (defparameter *done* "done")
@@ -28,11 +29,23 @@
             (equal (getf todo :id) id))
         *todos*))
 
-(defun select-by-status (done?)
+(defun narrow-by-status (done?)
     (remove-if-not
         #'(lambda (todo)
             (equal (getf todo :done) done?))
         *todos*))
+
+(defun select-by-status (status)
+    (cond
+        ((string= status *all*)
+            *todos*)
+        ((string= status *current*)
+            (narrow-by-status nil))
+        ((string= status *archived*)
+            (narrow-by-status t))
+        (t
+            (format t "[ERROR] Unknown status command: ~a~%" status)
+            nil)))
 
 (defun new-todo (task)
     (list
@@ -59,8 +72,9 @@
 (defun formatted-todo (todo &optional (id-length 0) (task-length 0))
     (let*
         ((first-tab (+ 3 id-length))
+         (second-tab (+ 1 first-tab task-length))
          (template
-            (concatenate 'string "#~a" (tab-of first-tab) "~a" (tab-of (+ 1 first-tab task-length)) "[~:[ ~;x~]]~%")))
+            (concatenate 'string "#~a" (tab-of first-tab) "~a" (tab-of second-tab) "[~:[ ~;x~]]~%")))
         (format t template
             (getf todo :id)
             (getf todo :task)
@@ -144,17 +158,8 @@
         todos
         :initial-value 0))
 
-(defun dispatch-add ()
-    (format t "[INFO] Task added: \"~a\"~%~%" (add-todo (prompt-for-todo)))
-    (dispatch-show `(*archived*)))
-
-(defun dispatch-edit (arguments)
-    (let ((id (parse-integer (first arguments) :junk-allowed t)))
-        ; TODO: implement edit function
-        (format t "[UNDER CONSTRUCTION] Soon, this will allow to edit todo with id of ~a.~%" id)))
-
 (defun dispatch-show (arguments)
-    (let* ((todos (reverse (select-by-status (if arguments (archived? (first arguments))))))
+    (let* ((todos (reverse (select-by-status (if arguments (first arguments) *all*))))
            ; TODO: move other local variables to a function
            (latest-todo (first (reverse todos)))
            (latest-id (getf latest-todo :id))
@@ -171,6 +176,15 @@
                     (formatted-todo todo id-length task-length)))
             (t
                 (format t "[INFO] No tasks matching criteria.~%")))))
+
+(defun dispatch-add ()
+    (format t "[INFO] Task added: \"~a\"~%~%" (add-todo (prompt-for-todo)))
+    (dispatch-show '(*archived*)))
+
+(defun dispatch-edit (arguments)
+    (let ((id (parse-integer (first arguments) :junk-allowed t)))
+        ; TODO: implement edit function
+        (format t "[UNDER CONSTRUCTION] Soon, this will allow to edit todo with id of ~a.~%" id)))
 
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
