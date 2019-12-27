@@ -44,8 +44,7 @@
         ((string= status *archived*)
             (narrow-by-status t))
         (t
-            (format t "[ERROR] Unknown status command: ~a~%" status)
-            nil)))
+            (format t "[ERROR] Unknown status command: ~a~%" status))))
 
 (defun new-todo (task)
     (list
@@ -158,8 +157,20 @@
         todos
         :initial-value 0))
 
+(defun title-by-status (status)
+    (cond
+        ((string= status *all*)
+            (format t "All tasks:~%----------~%"))
+        ((string= status *current*)
+            (format t "Current tasks:~%--------------~%"))
+        ((string= status *archived*)
+            (format t "Finished tasks:~%---------------~%"))
+        (t
+            (format t "Tasks:~%------~%"))))
+
 (defun dispatch-show (arguments)
-    (let* ((todos (reverse (select-by-status (if arguments (first arguments) *all*))))
+    (let* ((status (if arguments (first arguments) *all*))
+           (todos (reverse (select-by-status status)))
            ; TODO: move other local variables to a function
            (latest-todo (first (reverse todos)))
            (latest-id (getf latest-todo :id))
@@ -169,8 +180,7 @@
             ((equal *todos* nil)
                 (format t "[INFO] No todos. Type `add` to add some.~%"))
             (todos
-                ; TODO: dynamic section title
-                (format t "Tasks:~%------~%")
+                (title-by-status status)
                 (dolist (todo todos)
                     (formatted-todo todo id-length task-length)))
             (t
