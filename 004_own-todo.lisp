@@ -43,7 +43,7 @@
         ((string= status *done*)
             (narrow-by-status t))
         (t
-            (format t "[ERROR] Unknown status command: ~a~%" status))))
+            (format t "[ERROR] Unknown status: ~a. Possibilities: all (default), current, and done.~%" status))))
 
 (defun new-todo (task)
     (list
@@ -178,19 +178,16 @@
 
 (defun dispatch-show (arguments)
     (let* ((status (if arguments (first arguments) *all*))
-           (todos (select-by-status status))
-           ; TODO: move other local variables to a function
-           (latest-todo (first todos))
-           (latest-id (getf latest-todo :id))
-           (id-length (length (write-to-string latest-id)))
-           (task-length (longest-taskname todos)))
+           (todos (select-by-status status)))
         (cond
             ((equal *todos* nil)
                 (format t "[INFO] No todos. Type `add` to add some.~%"))
             (todos
                 (title-by-status status)
-                (dolist (todo (reverse todos))
-                    (formatted-todo todo id-length task-length)))
+                (let ((id-length (length (write-to-string (getf (first todos) :id))))
+                      (task-length (longest-taskname todos)))
+                    (dolist (todo (reverse todos))
+                        (formatted-todo todo id-length task-length))))
             (t
                 (format t "[INFO] No tasks matching criteria.~%")))))
 
@@ -229,7 +226,7 @@
 
 (defun dispatch-help ()
     (dolist (instruction '("- add - prompts for a new todo.~%"
-                           "- show [current|done] - shows a list of current (default) or done todos.~%"
+                           "- show [all|current|done] - shows a list of all (default), current, or done todos.~%"
                            "- edit <id> - prompts for edit of a chosen todo.~%"
                            "- mark <id> done|undone - marks todo as either done, or undone.~%"
                            "- help - displays this message.~%"
