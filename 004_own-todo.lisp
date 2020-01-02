@@ -65,6 +65,15 @@
                 todo)
             *todos*)))
 
+(defun update-task (id task)
+    (setf *todos*
+        (mapcar
+            #'(lambda (todo)
+                (when (matches-id? id todo)
+                    (setf (getf todo :task) task))
+                todo)
+            *todos*)))
+
 (defun tab-of (count)
     (concatenate 'string "~" (write-to-string count) "t"))
 
@@ -170,9 +179,9 @@
 
 (defun dispatch-show (arguments)
     (let* ((status (if arguments (first arguments) *all*))
-           (todos (reverse (select-by-status status)))
+           (todos (select-by-status status))
            ; TODO: move other local variables to a function
-           (latest-todo (first (reverse todos)))
+           (latest-todo (first todos))
            (latest-id (getf latest-todo :id))
            (id-length (length (write-to-string latest-id)))
            (task-length (longest-taskname todos)))
@@ -181,19 +190,25 @@
                 (format t "[INFO] No todos. Type `add` to add some.~%"))
             (todos
                 (title-by-status status)
-                (dolist (todo todos)
+                (dolist (todo (reverse todos))
                     (formatted-todo todo id-length task-length)))
             (t
                 (format t "[INFO] No tasks matching criteria.~%")))))
 
 (defun dispatch-add ()
     (format t "[INFO] Task added: \"~a\"~%~%" (add-todo (prompt-for-todo)))
-    (dispatch-show '(*archived*)))
+    (dispatch-show (list *all*)))
 
 (defun dispatch-edit (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t)))
-        ; TODO: implement edit function
-        (format t "[UNDER CONSTRUCTION] Soon, this will allow to edit todo with id of ~a.~%" id)))
+        (cond
+            ((equal id nil)
+                (format t "[ERROR] Second argument has to be a valid number.~%"))
+            ((equal (select-by-id id) nil)
+                (format t "[WARNING] There is no todo with id ~a.~%[INFO] No operation pefromed.~%" id))
+            (t
+                ;; TODO: print the edited task
+                (update-task id (prompt-read "[PROMPT] New task description: "))))))
 
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
