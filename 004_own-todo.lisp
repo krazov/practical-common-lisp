@@ -2,13 +2,12 @@
 
 (defparameter *add* "add")
 (defparameter *show* "show")
-(defparameter *current* "current")
-(defparameter *archived* "archived")
 (defparameter *all* "all")
-(defparameter *edit* "edit")
-(defparameter *mark* "mark")
+(defparameter *current* "current")
 (defparameter *done* "done")
 (defparameter *undone* "undone")
+(defparameter *edit* "edit")
+(defparameter *mark* "mark")
 (defparameter *help* "help")
 (defparameter *exit* "exit")
 
@@ -41,7 +40,7 @@
             *todos*)
         ((string= status *current*)
             (narrow-by-status nil))
-        ((string= status *archived*)
+        ((string= status *done*)
             (narrow-by-status t))
         (t
             (format t "[ERROR] Unknown status command: ~a~%" status))))
@@ -138,8 +137,8 @@
 (defun current? (type)
     (equal type *current*))
 
-(defun archived? (type)
-    (equal type *archived*))
+(defun done? (type)
+    (equal type *done*))
 
 (defun edit? (operation)
     (equal operation *edit*))
@@ -172,7 +171,7 @@
             (format t "All tasks:~%----------~%"))
         ((string= status *current*)
             (format t "Current tasks:~%--------------~%"))
-        ((string= status *archived*)
+        ((string= status *done*)
             (format t "Finished tasks:~%---------------~%"))
         (t
             (format t "Tasks:~%------~%"))))
@@ -230,7 +229,7 @@
 
 (defun dispatch-help ()
     (dolist (instruction '("- add - prompts for a new todo.~%"
-                           "- show [current|archived] - shows a list of current (default) or archived todos.~%"
+                           "- show [current|done] - shows a list of current (default) or done todos.~%"
                            "- edit <id> - prompts for edit of a chosen todo.~%"
                            "- mark <id> done|undone - marks todo as either done, or undone.~%"
                            "- help - displays this message.~%"
@@ -249,6 +248,7 @@
                 (dispatch-edit (cdr commands)))
             ((mark? operation)
                 (dispatch-mark (cdr commands)))
+            ; TODO: delete
             ((help? operation)
                 (dispatch-help))
             ((exit? operation)
