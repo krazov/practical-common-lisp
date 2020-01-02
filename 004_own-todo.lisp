@@ -196,15 +196,17 @@
     (dispatch-show (list *all*)))
 
 (defun dispatch-edit (arguments)
-    (let ((id (parse-integer (first arguments) :junk-allowed t)))
+    (let* ((id (parse-integer (first arguments) :junk-allowed t))
+           (todos (select-by-id id)))
         (cond
             ((equal id nil)
                 (format t "[ERROR] Second argument has to be a valid number.~%"))
-            ((equal (select-by-id id) nil)
+            ((equal todos nil)
                 (format t "[WARNING] There is no todo with id ~a.~%[INFO] No operation pefromed.~%" id))
             (t
-                ;; TODO: print the edited task
-                (update-task id (prompt-read "[PROMPT] New task description: "))))))
+                (let ((todo (first todos)))
+                    (format t "[INFO] Editing task #~a: ~a~%" (getf todo :id) (getf todo :task)))
+                (update-task id (prompt-read "[PROMPT] New description: "))))))
 
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
