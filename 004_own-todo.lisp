@@ -59,6 +59,8 @@
     (push todo *todos*)
     (getf todo :task))
 
+;; TODO: abstract common part from set-done and update-task
+
 (defun set-done (id status)
     (setf *todos*
         (mapcar
@@ -70,6 +72,7 @@
 
 (defun update-task (id task)
     ; TODO: print info about result
+    ; TODO: move check outside of this function to where it's called
     (unless (string= task "")
         (setf *todos*
             (mapcar
