@@ -11,6 +11,10 @@
 (defparameter *help* "help")
 (defparameter *exit* "exit")
 
+;;; app state
+
+(defvar *list-type* *all*)
+
 ;;; todos list
 
 (defvar *todos* ())
@@ -65,13 +69,15 @@
             *todos*)))
 
 (defun update-task (id task)
-    (setf *todos*
-        (mapcar
-            #'(lambda (todo)
-                (when (matches-id? id todo)
-                    (setf (getf todo :task) task))
-                todo)
-            *todos*)))
+    ; TODO: print info about result
+    (unless (string= task "")
+        (setf *todos*
+            (mapcar
+                #'(lambda (todo)
+                    (when (matches-id? id todo)
+                        (setf (getf todo :task) task))
+                    todo)
+                *todos*))))
 
 (defun tab-of (count)
     (concatenate 'string "~" (write-to-string count) "t"))
@@ -176,9 +182,11 @@
         (t
             (format t "Tasks:~%------~%"))))
 
-(defun dispatch-show (arguments)
-    (let* ((status (if arguments (first arguments) *all*))
+(defun dispatch-show (&optional arguments)
+    (let* ((status (if arguments (first arguments) *list-type*))
            (todos (select-by-status status)))
+        (unless (string= *list-type* status)
+            (setq *list-type* status))
         (cond
             ((equal *todos* nil)
                 (format t "[INFO] No todos. Type `add` to add some.~%"))
@@ -193,7 +201,7 @@
 
 (defun dispatch-add ()
     (format t "[INFO] Task added: \"~a\"~%~%" (add-todo (prompt-for-todo)))
-    (dispatch-show (list *all*)))
+    (dispatch-show))
 
 (defun dispatch-edit (arguments)
     (let* ((id (parse-integer (first arguments) :junk-allowed t))
@@ -206,12 +214,13 @@
             (t
                 (let ((todo (first todos)))
                     (format t "[INFO] Editing task #~a: ~a~%" (getf todo :id) (getf todo :task)))
-                (update-task id (prompt-read "[PROMPT] New description: "))))))
+                (update-task id (prompt-read "[PROMPT] New description: "))
+                (format t "~%")
+                (dispatch-show)))))
 
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
           (status (second arguments)))
-        ; TODO: re-loading previous list after update
         (cond
             ((equal id nil)
                 (format t "[ERROR] Second argument has to be a valid number.~%"))
@@ -219,16 +228,18 @@
                 (format t "[WARNING] There is no todo with id ~a. No operation pefromed.~%" id))
             ((done? status)
                 (set-done id t)
-                (format t "[INFO] Todo with id ~a status changed to: done.~%" id))
+                (format t "[INFO] Todo with id ~a status changed to: done.~%~%" id)
+                (dispatch-show))
             ((undone? status)
                 (set-done id nil)
-                (format t "[INFO] Todo with id ~a status changed to: undone.~%" id))
+                (format t "[INFO] Todo with id ~a status changed to: undone.~%~%" id)
+                (dispatch-show))
             (t
                 (format t "[ERROR] Status has to be either \"done\", or \"undone\".~%")))))
 
 (defun dispatch-help ()
     (dolist (instruction '("- add - prompts for a new todo.~%"
-                           "- show [all|current|done] - shows a list of all (default), current, or done todos.~%"
+                           "- show [all|current|done] - shows a list of all, current, or done todos. Default value: last type of a list.~%"
                            "- edit <id> - prompts for edit of a chosen todo.~%"
                            "- mark <id> done|undone - marks todo as either done, or undone.~%"
                            "- help - displays this message.~%"
