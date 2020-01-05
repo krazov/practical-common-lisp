@@ -59,25 +59,20 @@
     (push todo *todos*)
     (getf todo :task))
 
-;; TODO: abstract common part from set-done and update-task
+(defun update-todo (id field val)
+    (setf *todos*
+        (mapcar
+            #'(lambda (todo)
+                (when (matches-id? id todo)
+                    (setf (getf todo field) val))
+                todo)
+            *todos*)))
 
 (defun set-done (id status)
-    (setf *todos*
-        (mapcar
-            #'(lambda (todo)
-                (when (matches-id? id todo)
-                    (setf (getf todo :done) status))
-                todo)
-            *todos*)))
+    (update-todo id :done status))
 
 (defun update-task (id task)
-    (setf *todos*
-        (mapcar
-            #'(lambda (todo)
-                (when (matches-id? id todo)
-                    (setf (getf todo :task) task))
-                todo)
-            *todos*)))
+    (update-todo id :task task))
 
 (defun tab-of (count)
     (concatenate 'string "~" (write-to-string count) "t"))
