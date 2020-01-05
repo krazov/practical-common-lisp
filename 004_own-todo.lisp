@@ -8,6 +8,7 @@
 (defparameter *undone* "undone")
 (defparameter *edit* "edit")
 (defparameter *mark* "mark")
+(defparameter *delete* "delete")
 (defparameter *help* "help")
 (defparameter *exit* "exit")
 
@@ -126,6 +127,9 @@
                     (setq start index))
                 ((and (not-space? previous) (space? current))
                     (push (string-downcase (subseq str start index)) words))))))
+
+(defun clear-screen()
+    (format t "~A[H~@*~A[J" #\escape))
 
 ;;; checking vocabulary
 
@@ -271,6 +275,7 @@
 ;;; fire!
 
 (defun main ()
+    (clear-screen)
     (format t "Type a command ('help' for the manual, 'exit' to leave).~%")
     ; TODO: load (and save) todos to local file
     (do () ((exit? (dispatch (list-of-words (prompt-for-command)))))))
