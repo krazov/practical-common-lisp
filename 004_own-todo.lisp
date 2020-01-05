@@ -75,6 +75,13 @@
 (defun update-task (id task)
     (update-todo id :task task))
 
+(defun delete-todo (id)
+    (setf *todos*
+        (remove-if
+            #'(lambda (todo)
+                (equal (getf todo :id) id))
+            *todos*)))
+
 (defun tab-of (count)
     (concatenate 'string "~" (write-to-string count) "t"))
 
@@ -151,6 +158,9 @@
 (defun mark? (operation)
     (equal operation *mark*))
 
+(defun delete? (operation)
+    (equal operation *delete*))
+
 (defun done? (status)
     (equal status *done*))
 
@@ -188,7 +198,7 @@
             (setq *list-type* status))
         (cond
             ((equal *todos* nil)
-                (format t "[INFO] No todos. Type `add` to add some.~%"))
+                (format t "[INFO] No todos. Type 'add' to add some.~%"))
             (todos
                 (title-by-status status)
                 (let ((id-length (length (write-to-string (getf (first todos) :id))))
@@ -207,7 +217,7 @@
            (todos (select-by-id id)))
         (cond
             ((equal id nil)
-                (format t "[ERROR] Second argument has to be a valid number.~%"))
+                (format t "[ERROR] The argument has to be a valid number.~%"))
             ((equal todos nil)
                 (format t "[WARNING] There is no todo with id ~a.~%[INFO] No operation pefromed.~%" id))
             (t
@@ -228,7 +238,7 @@
           (status (second arguments)))
         (cond
             ((equal id nil)
-                (format t "[ERROR] Second argument has to be a valid number.~%"))
+                (format t "[ERROR] The argument has to be a valid number.~%"))
             ((equal (select-by-id id) nil)
                 (format t "[WARNING] There is no todo with id ~a. No operation performed.~%" id))
             ((done? status)
@@ -241,6 +251,17 @@
                 (dispatch-show))
             (t
                 (format t "[ERROR] Status has to be either \"done\", or \"undone\".~%")))))
+
+(defun dispatch-delete (arguments)
+    (let ((id (parse-integer (first arguments) :junk-allowed t)))
+        (cond
+            ((equal id nil)
+                (format t "[ERROR] The argument has to be a valid number.~%"))
+            ((equal (select-by-id id) nil)
+                (format t "[INFO] There is no todo with id ~a. No operation performed.~%" id))
+            (t
+                (delete-todo id)
+                (format t "[INFO] The todo #~a has been deleted.~%" id)))))
 
 (defun dispatch-help ()
     (dolist (instruction '("- add - prompts for a new todo.~%"
@@ -263,7 +284,8 @@
                 (dispatch-edit (cdr commands)))
             ((mark? operation)
                 (dispatch-mark (cdr commands)))
-            ; TODO: delete
+            ((delete? operation)
+                (dispatch-delete (cdr commands)))
             ((help? operation)
                 (dispatch-help))
             ((exit? operation)
