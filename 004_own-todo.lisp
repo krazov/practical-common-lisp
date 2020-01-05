@@ -20,9 +20,8 @@
 
 (defvar *todos* ())
 
-(defvar *new-id*
-    (let ((count 0))
-        #'(lambda () (setq count (1+ count)))))
+(defun new-id ()
+    (if *todos* (1+ (getf (first *todos*) :id)) 1))
 
 (defun matches-id? (id todo)
     (equal (getf todo :id) id))
@@ -52,7 +51,7 @@
 
 (defun new-todo (task)
     (list
-        :id (funcall *new-id*)
+        :id (new-id)
         :task task
         :done nil))
 
