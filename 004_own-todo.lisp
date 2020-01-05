@@ -90,7 +90,7 @@
         ((first-tab (+ 3 id-length))
          (second-tab (+ 1 first-tab task-length))
          (template
-            (concatenate 'string "#~a" (tab-of first-tab) "~a" (tab-of second-tab) "[~:[ ~;x~]]~%")))
+             (concatenate 'string "#~a" (tab-of first-tab) "~a" (tab-of second-tab) "[~:[ ~;x~]]~%")))
         (format t template
             (getf todo :id)
             (getf todo :task)
