@@ -71,16 +71,13 @@
             *todos*)))
 
 (defun update-task (id task)
-    ; TODO: print info about result
-    ; TODO: move check outside of this function to where it's called
-    (unless (string= task "")
-        (setf *todos*
-            (mapcar
-                #'(lambda (todo)
-                    (when (matches-id? id todo)
-                        (setf (getf todo :task) task))
-                    todo)
-                *todos*))))
+    (setf *todos*
+        (mapcar
+            #'(lambda (todo)
+                (when (matches-id? id todo)
+                    (setf (getf todo :task) task))
+                todo)
+            *todos*)))
 
 (defun tab-of (count)
     (concatenate 'string "~" (write-to-string count) "t"))
@@ -215,9 +212,15 @@
             ((equal todos nil)
                 (format t "[WARNING] There is no todo with id ~a.~%[INFO] No operation pefromed.~%" id))
             (t
-                (let ((todo (first todos)))
-                    (format t "[INFO] Editing task #~a: ~a~%" (getf todo :id) (getf todo :task)))
-                (update-task id (prompt-read "[PROMPT] New description: "))
+                (let ((new-description
+                          (let ((todo (first todos)))
+                              (format t "[INFO] Editing task #~a: ~a~%" (getf todo :id) (getf todo :task))
+                              (prompt-read "[PROMPT] New description: "))))
+                    (if (string= new-description "")
+                        (format t "[INFO] Empty description. No operation performed.~%")
+                        (progn
+                            (update-task id new-description)
+                            (format t "[INFO] Todo #~a changed to: ~a~%" id new-description))))
                 (format t "~%")
                 (dispatch-show)))))
 
@@ -228,7 +231,7 @@
             ((equal id nil)
                 (format t "[ERROR] Second argument has to be a valid number.~%"))
             ((equal (select-by-id id) nil)
-                (format t "[WARNING] There is no todo with id ~a. No operation pefromed.~%" id))
+                (format t "[WARNING] There is no todo with id ~a. No operation performed.~%" id))
             ((done? status)
                 (set-done id t)
                 (format t "[INFO] Todo with id ~a status changed to: done.~%~%" id)
