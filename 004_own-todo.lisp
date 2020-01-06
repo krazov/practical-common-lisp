@@ -1,22 +1,24 @@
-;;; vocabulary
-
-(defparameter *add* "add")
-(defparameter *show* "show")
-(defparameter *all* "all")
-(defparameter *current* "current")
-(defparameter *done* "done")
-(defparameter *undone* "undone")
-(defparameter *edit* "edit")
-(defparameter *mark* "mark")
-(defparameter *delete* "delete")
-(defparameter *help* "help")
-(defparameter *exit* "exit")
-
 ;;; app state
 
-(defvar *list-type* *all*)
-
+(defvar *list-type* 'all)
 (defvar *todos* ())
+
+;;; vocabulary
+
+(defun parse-operation (potential-operation)
+    (find potential-operation '(add show edit mark delete help exit) :test #'string-equal))
+
+(defun parse-status (potential-status)
+    (find potential-status '(all current done) :test #'string-equal))
+
+(defun done? (status)
+    (equal status 'done))
+
+(defun undone? (status)
+    (equal status 'undone))
+
+(defun exit? (operation)
+    (equal operation 'exit))
 
 ;;; todos operations
 
@@ -38,16 +40,13 @@
             (equal (getf todo :done) done?))
         *todos*))
 
+
 (defun select-by-status (status)
-    (cond
-        ((string= status *all*)
-            *todos*)
-        ((string= status *current*)
-            (narrow-by-status nil))
-        ((string= status *done*)
-            (narrow-by-status t))
-        (t
-            (format t "[ERROR] Unknown status: ~a. Possibilities: all (default), current, and done.~%" status))))
+    (case (parse-status status)
+        (all *todos*)
+        (current (narrow-by-status nil))
+        (done (narrow-by-status t))
+        (otherwise (format t "[ERROR] Unknown status: ~a. Possibilities: all (default), current, and done.~%" status))))
 
 (defun new-todo (task)
     (list
@@ -141,41 +140,6 @@
     (dolist (line lines-of-text)
         (format t "~a~%" line)))
 
-;;; checking vocabulary
-
-(defun add? (operation)
-    (equal operation *add*))
-
-(defun show? (operation)
-    (equal operation *show*))
-
-(defun current? (type)
-    (equal type *current*))
-
-(defun done? (type)
-    (equal type *done*))
-
-(defun edit? (operation)
-    (equal operation *edit*))
-
-(defun mark? (operation)
-    (equal operation *mark*))
-
-(defun delete? (operation)
-    (equal operation *delete*))
-
-(defun done? (status)
-    (equal status *done*))
-
-(defun undone? (status)
-    (equal status *undone*))
-
-(defun help? (operation)
-    (equal operation *help*))
-
-(defun exit? (operation)
-    (equal operation *exit*))
-
 (defun longest-taskname (todos)
     (reduce
         #'(lambda (possible-answer current)
@@ -184,15 +148,11 @@
         :initial-value 0))
 
 (defun title-by-status (status)
-    (cond
-        ((string= status *all*)
-            (format t "All tasks:~%----------~%"))
-        ((string= status *current*)
-            (format t "Current tasks:~%--------------~%"))
-        ((string= status *done*)
-            (format t "Finished tasks:~%---------------~%"))
-        (t
-            (format t "Tasks:~%------~%"))))
+    (case (parse-status status)
+        (all (format t "All tasks:~%----------~%"))
+        (current (format t "Current tasks:~%--------------~%"))
+        (done (format t "Finished tasks:~%---------------~%"))
+        (otherwise (format t "Tasks:~%------~%"))))
 
 ;;; disk operations
 
@@ -255,7 +215,7 @@
 
 (defun dispatch-mark (arguments)
     (let ((id (parse-integer (first arguments) :junk-allowed t))
-          (status (second arguments)))
+          (status (parse-status (second arguments))))
         (cond
             ((equal id nil)
                 (format t "[ERROR] The argument has to be a valid number.~%"))
@@ -300,28 +260,28 @@
                             "Type a command ('help' for the manual, 'exit' to leave).")))
 
 (defun dispatch (commands)
-    (let ((operation (first commands)))
+    (let ((operation (parse-operation (first commands))))
         (format t "~%")
-        (cond
-            ((add? operation)
+        (case operation
+            (add
                 (dispatch-add)
                 (save-db "todos.db"))
-            ((show? operation)
+            (show
                 (dispatch-show (cdr commands)))
-            ((edit? operation)
+            (edit
                 (dispatch-edit (cdr commands))
                 (save-db "todos.db"))
-            ((mark? operation)
+            (mark
                 (dispatch-mark (cdr commands))
                 (save-db "todos.db"))
-            ((delete? operation)
+            (delete
                 (dispatch-delete (cdr commands))
                 (save-db "todos.db"))
-            ((help? operation)
+            (help
                 (dispatch-help))
-            ((exit? operation)
+            (exit
                 (format t "Goodbye.~%"))
-            (t
+            (otherwise
                 (format t "[ERROR] Unknown command:~{ ~a~}\.~%" commands)))
         operation))
 
