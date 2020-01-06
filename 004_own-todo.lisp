@@ -16,9 +16,9 @@
 
 (defvar *list-type* *all*)
 
-;;; todos list
-
 (defvar *todos* ())
+
+;;; todos operations
 
 (defun new-id ()
     (if *todos* (1+ (getf (first *todos*) :id)) 1))
@@ -137,6 +137,10 @@
 (defun clear-screen()
     (format t "~A[H~@*~A[J" #\escape))
 
+(defun print-multiple-lines (lines-of-text)
+    (dolist (line lines-of-text)
+        (format t "~a~%" line)))
+
 ;;; checking vocabulary
 
 (defun add? (operation)
@@ -189,6 +193,23 @@
             (format t "Finished tasks:~%---------------~%"))
         (t
             (format t "Tasks:~%------~%"))))
+
+;;; disk operations
+
+(defun save-db (filename)
+    (with-open-file (out filename
+                     :direction :output
+                     :if-exists :supersede)
+        (with-standard-io-syntax (print *todos* out))))
+
+(defun load-db (filename)
+    (with-open-file (in filename
+                     :if-does-not-exist nil)
+        (when in
+            (with-standard-io-syntax
+                (setf *todos* (read in))))))
+
+;;; dispatchers
 
 (defun dispatch-show (&optional arguments)
     (let* ((status (if arguments (first arguments) *list-type*))
@@ -263,28 +284,39 @@
                 (format t "[INFO] The todo #~a has been deleted.~%" id)))))
 
 (defun dispatch-help ()
-    (dolist (instruction '("- add - prompts for a new todo.~%"
-                           "- show [all|current|done] - shows a list of all, current, or done todos. Default value: last type of a list.~%"
-                           "- edit <id> - prompts for edit of a chosen todo.~%"
-                           "- mark <id> done|undone - marks todo as either done, or undone.~%"
-                           "- help - displays this message.~%"
-                           "- exit - exits the application.~%"))
-        (format t instruction)))
+    (print-multiple-lines '("- add - prompts for a new todo."
+                           "- show [all|current|done] - shows a list of all, current, or done todos. Default value: last type of a list."
+                           "- edit <id> - prompts for edit of a chosen todo."
+                           "- mark <id> done|undone - marks todo as either done, or undone."
+                           "- help - displays this message."
+                           "- exit - exits the application.")))
+
+(defun dispatch-welcome-message ()
+    (print-multiple-lines '("Jon Krazov presents:"
+                            ""
+                            "T O D O   L I S T"
+                            "-----------------"
+                            ""
+                            "Type a command ('help' for the manual, 'exit' to leave).")))
 
 (defun dispatch (commands)
     (let ((operation (first commands)))
         (format t "~%")
         (cond
             ((add? operation)
-                (dispatch-add))
+                (dispatch-add)
+                (save-db "todos.db"))
             ((show? operation)
                 (dispatch-show (cdr commands)))
             ((edit? operation)
-                (dispatch-edit (cdr commands)))
+                (dispatch-edit (cdr commands))
+                (save-db "todos.db"))
             ((mark? operation)
-                (dispatch-mark (cdr commands)))
+                (dispatch-mark (cdr commands))
+                (save-db "todos.db"))
             ((delete? operation)
-                (dispatch-delete (cdr commands)))
+                (dispatch-delete (cdr commands))
+                (save-db "todos.db"))
             ((help? operation)
                 (dispatch-help))
             ((exit? operation)
@@ -296,7 +328,7 @@
 ;;; fire!
 
 (defun main ()
+    (load-db "todos.db")
     (clear-screen)
-    (format t "Type a command ('help' for the manual, 'exit' to leave).~%")
-    ; TODO: load (and save) todos to local file
+    (dispatch-welcome-message)
     (do () ((exit? (dispatch (list-of-words (prompt-for-command)))))))
