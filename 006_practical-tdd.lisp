@@ -35,23 +35,40 @@
     (check-iteration-4 (= (+ -1 -3) -4)))
 
 ;;; iteration 5
-(defun report-result (result form)
+(defun report-result-iteration-5 (result form)
     (format t "~:[FAIL~;pass~] ... ~a~%" result form))
 
-(defmacro check-iteration-3b (form)
-    `(report-result ,form ',form))
+(defmacro check-iteration-5 (&body forms)
+    `(progn
+        ,@(loop for form in forms collect `(report-result-iteration-5 ,form ',form))))
+
+(defun test-+-iteration-5 ()
+    (check-iteration-5
+        (= (+ 1 2) 3)
+        (= (+ 1 2 3) 6)
+        (= (+ -1 -3) -4)))
+
+;;; iteration 6
+(defun report-result (result form)
+    (format t "~:[FAIL~;pass~] ... ~a~%" result form)
+    result)
+
+(defmacro with-gensyms ((&rest names) &body body)
+  `(let ,(loop for n in names collect `(,n (gensym)))
+     ,@body))
+
+(defmacro combine-results (&body forms)
+    (with-gensyms (result)
+        `(let ((,result t))
+            ,@(loop for form-result in forms collect `(unless ,form-result (setf ,result nil)))
+            ,result)))
 
 (defmacro check (&body forms)
-    `(progn
+    `(combine-results
         ,@(loop for form in forms collect `(report-result ,form ',form))))
-
-(defun test-+-iteration-3b ()
-    (check (= (+ 1 2) 3))
-    (check (= (+ 1 2 3) 6))
-    (check (= (+ -1 -3) -4)))
 
 (defun test-+ ()
     (check
         (= (+ 1 2) 3)
         (= (+ 1 2 3) 6)
-        (= (+ -1 -3) -4)))
+        (= (+ -1 -3) -5)))
